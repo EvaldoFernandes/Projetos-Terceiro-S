@@ -1,0 +1,52 @@
+create schema if not exists livraria default character set utf8;
+use livraria;
+
+/* show databases */
+
+create table if not exists livraria.livro(
+titulo varchar(255),
+preco double
+) engine = MyISAM;
+
+/* show tables;
+   drop tables;
+   alter table livro rename livros;
+   alter table livro add paginas integer;
+   alter table livro drop column paginas;
+*/
+insert into livro(titulo, preco)
+values ('Java','98.75');
+
+/* select * from livro; */
+
+set sql_safe_updates = 0;
+update livro set preco = 115.9 where titulo = 'Java';
+
+/* select * from livro */
+
+create table if not exists livraria.livros2(
+titulo varchar(255) not null,
+preco double not null
+) engine = MyISAM;
+
+/* select * from livro2 */
+
+/* Atividade 1 */
+
+insert into livro(titulo, preco)
+values('Cobol','100.99'),
+	  ('Delphi','50.67'),
+      ('Angular','110.78');
+      
+/* Atividade 2 */
+
+select * from livro;
+
+/* Atividade 3 */
+
+update livro set preco = 112.99 where titulo = 'Java';
+update livro set preco = 99.98 where titulo = 'Cobol';
+update livro set preco = 40.98 where titulo = 'Delphi';
+update livro set preco = 100.77 where titulo = 'Angular';
+
+select * from livro;
