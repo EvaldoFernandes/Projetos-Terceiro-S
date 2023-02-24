@@ -1,0 +1,29 @@
+create schema if not exists ExercicioAula2 default character set utf8;
+use ExercicioAula2;
+
+create table if not exists ExercicioAula2.Estudantes(
+nome varchar(255),
+email varchar(255),
+telefone varchar(255),
+altura decimal(3,2),
+aprovado tinyint(1)
+) engine = InnoDB;
+
+insert into Estudantes(nome,email,telefone,altura,aprovado)
+values('João Paulo','jpapim@gmail.com','3345-0909',1.98,1),
+	  ('José Paulo','jose@gmail.com','3345-5555',1.98,1),
+      ('Maria','maria@gmail.com','3345-8888',1.98,0),
+      ('Joana','joana@gmail.com','3345-6666',1.98,0),
+      ('Josefina','josefina@gmail.com','3345-8765',1.58,0);
+      
+select avg(altura) from Estudantes where aprovado = 0;
+
+select count('name') from Estudantes where altura >= 1.70;
+
+select sum(altura) from Estudantes;
+
+select sum(altura) from Estudantes where aprovado = 1;
+
+select max(altura) from Estudantes;
+
+select min(altura) from Estudantes;
