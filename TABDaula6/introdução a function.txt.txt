@@ -1,0 +1,187 @@
+create schema if not exists bd_aula_functions default character set utf8;
+use bd_aula_functions;
+
+create table if not exists Aluno(
+id int not null,
+nome varchar(100) not null,
+matricula varchar(45) not null,
+data_nascimento date null,
+data_matricula date not null,
+primary key(id),
+  unique index matricula_UNIQUE (matricula asc)
+)engine = InnoDB;
+
+create table if not exists Prova(
+id int not null,
+data_realizacao date not null,
+descricao varchar(255) not null,
+primary key (id)
+)engine = InnoDB;
+
+create table if not exists Nota(
+aluno_id int not null,
+prova_id int not null,
+valor_nota decimal(15,2) null,
+primary key(aluno_id , prova_id),
+  index fk_aluno_has_prova_prova1 (prova_id asc),
+  index fk_aluno_has_prova_aluno1 (aluno_id asc),
+constraint fk_aluno_has_prova_aluno1
+  foreign key (aluno_id)
+    references aluno(id)
+    on delete no action
+    on update no action,
+constraint fk_aluno_has_prova_prova1
+  foreign key(prova_id)
+    references prova (id)
+    on delete no action
+    on update no action) engine = InnoDB;
+    
+insert into aluno(id, nome, matricula, data_nascimento, data_matricula)
+values(1,'Michael John','123A',str_to_date('23/08/1993', '%d/%m/%Y'),current_date()),
+	  (2,'Williaans Junior','400B',str_to_date('10/04/1993', '%d/%m/%Y'),current_date()),
+      (3,'John Billboard','420B',str_to_date('30/07/1993', '%d/%m/%Y'),current_date()),
+      (4,'Jenny Killy','010A',NULL,str_to_date('25/01/2014', '%d/%m/%Y'));
+      
+insert into prova(id, data_realizacao, descricao)
+values(1,str_to_date('30/03/2014', '%d/%m/%Y'),'Prova A1'),
+	  (2,str_to_date('30/04/2014', '%d/%m/%Y'),'Prova B1'),
+      (3,str_to_date('30/05/2014', '%d/%m/%Y'),'Prova C1'),
+      (4,str_to_date('30/07/2014', '%d/%m/%Y'),'Prova A2'),
+      (5,str_to_date('30/08/2014', '%d/%m/%Y'),'Prova B2'),
+      (6,str_to_date('30/09/2014', '%d/%m/%Y'),'Prova C2');
+      
+insert into nota(aluno_id, prova_id, valor_nota) values 
+#Aluno 1
+(1, 1, 10),
+(1, 2, 9.8),
+(1, 3, 8),
+(1, 4, 10),
+(1, 5, 10),
+(1, 6, 9),
+
+#Aluno 2
+(2, 1, 7),
+(2, 2, 7.5),
+(2, 3, 6),
+(2, 4, 8),
+(2, 5, 8.5),
+(2, 6, 9),
+
+#Aluno 3
+(3, 1, 9),
+(3, 2, 9),
+(3, 3, 9),
+(3, 4, 10),
+(3, 5, 10),
+(3, 6, 9.8),
+
+#Aluno 4
+(4, 1, 3),
+(4, 2, 6),
+(4, 3, 7),
+(4, 4, 8),
+(4, 5, 7),
+(4, 6, 7);
+
+set delimiter $
+
+create function calcula_nota(nota numeric(15,2)) returns numeric(15,2)
+begin
+  declare peso int;
+  
+  #Se a nota do aluno for maior do que 9.5 então sua nota terá um peso maior
+  
+    if nota > 9.5 then
+      set peso = 2;
+	else
+      set peso = 1;
+	end if;
+
+  return(nota*peso) / 20;
+end $
+
+set delimiter ;
+
+select a.nome, p.descricao, calcula_nota(n.valor_nota) as nota_calculada, n.valor_nota as nota_original from aluno a 
+  inner join nota n on a.id = n.aluno_id
+  inner join prova p on n.prova_id = p.id
+order by a.id, nota_calculada desc;
+
+select a.nome, (sum(calcula_nota(n.valor_nota))/6) as nota_calculada_media from aluno a
+inner join nota n on a.id = n.aluno_id
+inner join prova p on n.prova_id = p.id
+group by a.nome
+order by nota_calculada_media desc;
+
+set delimiter $
+
+create procedure arrendodamento_nota()
+begin
+#O Declare server para declarar uma variável que será utilizada durante o programa
+
+declare nota_atual numeric(15,2);
+declare id_aluno, id_prova numeric(15,2);
+
+#Criamos um cursor que ira "guardar" o resultado do select
+declare cur cursor for select valor_nota, aluno_id, prova_id from nota;
+
+#Abrimos o cursor para utilizá-lo dentro do loop
+open cur;
+
+#Iniciamos o loop dando um nome ao mesmo para que este possa ser referenciado caso #nescessário
+myloop:
+loop
+
+  #Atribuimos o valor das colunas do cursor as variáveis que criamos anteriormente
+  fetch cur into nota_atual, id_aluno, id_prova;
+  
+  #Lógica principal da nossa rotina
+  #Caso o próximo inteiro tenha uma diferença de 0.2 ou menos da nota atual
+  # então a nota atual será arredondada para este inteiro.
+  if (ceil(nota_atual) - nota_atual) <= 0.2 then
+    update nota set valor_nota = ceil(nota_atual) where aluno_id = id_aluno and prova_id = id_prova;
+  end if;
+  
+end loop;
+
+  #Fechamos o cursor
+  close cur;
+end $
+
+set delimiter ;
+
+call arrendodamento_nota();
+select * from nota;
+
+/* Atividade 1 */
+
+set delimiter $
+
+create function Mostrar_Maior_Nota() returns numeric
+begin
+ declare maior int;
+ select max(valor_nota) into maior from nota;
+ return maior;
+end $
+
+set delimiter ;
+
+select Mostrar_Maior_Nota();
+
+/* Atividade 2 */
+
+set delimiter $
+
+create function Mostrar_Media(nota numeric(15,2)) returns decimal(15,2)
+begin
+declare media numeric(15,2);
+set media = nota / 6;
+return media;
+end $
+
+set delimiter $
+
+select n.aluno_id as 'Id_Aluno',
+  (sum(Mostrar_Media(n.valor_nota))) as 'Media_Aluno_das_6_Provas'
+  from nota n group by n.aluno_id;
+  
