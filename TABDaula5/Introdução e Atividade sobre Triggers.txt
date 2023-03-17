@@ -1,0 +1,99 @@
+create schema if not exists bd_aula_triggers default character set utf8;
+use bd_aula_triggers;
+
+create table if not exists bd_aula_triggers.Aluno(
+cod int not null auto_increment,
+nome varchar(100) not null,
+curso int not null,
+status int not null,
+primary key(cod)
+)engine=InnoDB;
+
+create table if not exists bd_aula_triggers.Curso(
+cod int not null auto_increment,
+descricao varchar(200) not null,
+primary key(cod)
+)engine=InnoDB;
+
+create table if not exists bd_aula_triggers.Matricula(
+cod int not null auto_increment,
+aluno_cod int not null,
+curso_cod int not null,
+primary key(cod)
+)engine=InnoDB;
+
+insert into Curso(cod,descricao)
+values(NULL,'CIENCIAS DE COMPUTAÇÃO'),
+      (NULL,'TECNOLOGIA EM ANÁLISE E DESENVOLVIMENTO DE SISTEMAS'),
+      (NULL,'ENGENHARIA DA COMPUTAÇÃO'),
+      (NULL,'SISTEMAS DE INFORMAÇÃO');
+      
+set delimiter $$
+
+create trigger tg_matricula
+after insert on Aluno
+  for each row begin
+    insert into Matricula Values (NULL,NEW.cod,NEW.curso);
+    end;
+    
+set delimiter ;
+
+insert into Aluno(cod,nome,curso,`status`)
+values (NULL,'João Paulo Pimentel',2,1);
+
+insert into Aluno(cod,nome,curso,`status`)
+values(NULL,'José da Silva',4,1);
+
+create table if not exists bd_aula_triggers.Aluno_Auditoria(
+id int not null auto_increment,
+cod int not null,
+nome varchar(200) not null,
+modificado_em datetime default null,
+acao varchar(50) default null,
+primary key (id)
+)engine=InnoDB;
+
+set delimiter $$
+
+create trigger antesDeUpdate_Aluno
+before update on Aluno
+for each row
+  begin
+    insert into Aluno_Auditoria
+    set acao = 'update',
+    cod = old.cod,
+    nome = old.nome,
+    modificado_em = now();
+    end$$
+    
+set delimiter ;
+
+update Aluno set nome = 'José da Silva Pimentel' where cod = 1;
+
+update Aluno set nome = 'João Paulo' where cod = 2;
+int not null auto_increment,
+cod int not null,
+descricao varchar(200) not null,
+modificado_em datetime default null,
+acao varchar(50) default null,
+primary key (id)
+) engine = InnoDB;
+
+set delimiter $$
+
+create trigger antesDeUpdate_Curso
+before update on Curso
+for each row
+  begin
+    insert into Curso_Auditoria
+    set acao = 'update',
+    cod = old.cod,
+    descricao = old.descricao,
+    modificado_em = now();
+    end$$
+    
+set delimiter ;
+
+update Curso set descricao = 'Pedagogia' where cod = 2;
+
+select * from Curso_Auditoria;

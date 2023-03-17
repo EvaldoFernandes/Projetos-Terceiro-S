@@ -1,0 +1,77 @@
+create schema if not exists bd_aula_procedures default character set utf8;
+use bd_aula_procedures;
+
+create table pais(
+id_pais int not null auto_increment,
+nome_pais varchar(200) not null,
+primary key(id_pais)
+)engine= InnoDB;
+
+insert into pais values(NULL,'Brasil'),
+					   (NULL,'Chile');
+                      
+set delimiter $$
+
+drop procedure if exists listar_paises $$
+create procedure listar_paises (in id INT)
+begin
+  if (id is NULL) then
+    select * from pais;
+  else
+    select * from pais where id_pais = id;
+    end if;
+  end $$
+  
+set delimiter ;
+
+call listar_paises(null);
+
+call listar_paises(1);
+
+/* Atividade 1 */
+
+set delimiter $$
+
+drop procedure if exists Verificar_Quantidade_Pais $$
+create procedure Verificar_Quantidade_Pais(out total int)
+begin
+  select count(id_pais) into total from pais;
+  end $$
+  
+set delimiter ;
+
+insert into pais values(NULL,'Argentina');
+
+call Verificar_Quantidade_Pais(@total);
+
+select @total;
+
+/* Atividade 2 */
+
+set delimiter $$
+
+drop procedure if exists Selecionar_Paises $$
+create procedure Selecionar_Paises(in valor int)
+begin
+  select * from pais where id_pais <= valor;
+end $$
+
+set delimiter ;
+
+insert into pais values(NULL,'Bolívia'),
+					   (NULL,'Uruguai');
+                       
+call Selecionar_Paises(4);
+
+/* Atividade 3 */
+
+set delimiter $$
+
+drop procedure if exists Selecionar_Paises_Iniciando_Com $$
+create procedure Selecionar_Paises_Iniciando_Com(in letra char)
+begin
+  select * from pais where nome_pais like concat(letra,'%');
+end $$
+
+call Selecionar_Paises_Iniciando_Com('B');
+
